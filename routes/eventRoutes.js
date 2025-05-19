@@ -187,25 +187,26 @@ router.get("/media/:id/:type/:index", async (req, res) => {
     const { id, type, index } = req.params;
     const event = await Event.findById(id);
 
-    if (!event) {
-      return res.status(404).send("Event not found");
-    }
+    if (!event) return res.status(404).send("Event not found");
 
     const mediaArray = type === "image" ? event.images : event.videos;
     const media = mediaArray?.[index];
 
-    if (!media) {
+    if (!media || !media.data) {
       return res.status(404).send("Media not found");
     }
 
     let mediaBuffer;
 
-    // Fix for Binary.createFromBase64 stored format
-    if (media.data?._bsontype === "Binary" && media.data.buffer) {
+    // ✅ Support BSON Binary format and Buffer-like objects
+    if (media.data._bsontype === "Binary" && media.data.buffer) {
       mediaBuffer = Buffer.from(media.data.buffer);
+    } else if (media.data.type === "Buffer" && Array.isArray(media.data.data)) {
+      mediaBuffer = Buffer.from(media.data.data);
     } else if (Buffer.isBuffer(media.data)) {
       mediaBuffer = media.data;
     } else {
+      console.error("Unsupported media format:", media.data);
       return res.status(500).send("Unsupported media format");
     }
 
@@ -216,5 +217,6 @@ router.get("/media/:id/:type/:index", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
 
 module.exports = router;
