@@ -142,18 +142,24 @@ router.put("/:id", upload.fields([{ name: "images", maxCount: 5 }, { name: "vide
     let parsedExistingVideos = [];
     
     try {
-      if (existingImages && existingImages.trim()) {
+      if (typeof existingImages === 'string' && existingImages.trim()) {
         parsedExistingImages = JSON.parse(existingImages);
+      } else if (Array.isArray(existingImages)) {
+        parsedExistingImages = existingImages;
       }
+      
     } catch (e) {
       console.error("Error parsing existingImages:", e);
       parsedExistingImages = [];
     }
     
     try {
-      if (existingVideos && existingVideos.trim()) {
+      if (typeof existingVideos === 'string' && existingVideos.trim()) {
         parsedExistingVideos = JSON.parse(existingVideos);
+      } else if (Array.isArray(existingVideos)) {
+        parsedExistingVideos = existingVideos;
       }
+      
     } catch (e) {
       console.error("Error parsing existingVideos:", e);
       parsedExistingVideos = [];
