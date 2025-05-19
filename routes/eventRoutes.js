@@ -181,7 +181,6 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// GET: Serve event media
 router.get("/media/:id/:type/:index", async (req, res) => {
   try {
     const { id, type, index } = req.params;
@@ -196,21 +195,20 @@ router.get("/media/:id/:type/:index", async (req, res) => {
       return res.status(404).send("Media not found");
     }
 
+    // Simplified buffer handling
     let mediaBuffer;
-
-    // ✅ Support BSON Binary format and Buffer-like objects
-    if (media.data._bsontype === "Binary" && media.data.buffer) {
-      mediaBuffer = Buffer.from(media.data.buffer);
+    if (media.data instanceof Buffer) {
+      mediaBuffer = media.data;
+    } else if (media.data.buffer && media.data.buffer instanceof Buffer) {
+      mediaBuffer = media.data.buffer;
     } else if (media.data.type === "Buffer" && Array.isArray(media.data.data)) {
       mediaBuffer = Buffer.from(media.data.data);
-    } else if (Buffer.isBuffer(media.data)) {
-      mediaBuffer = media.data;
     } else {
       console.error("Unsupported media format:", media.data);
       return res.status(500).send("Unsupported media format");
     }
 
-    res.set("Content-Type", media.contentType || "application/octet-stream");
+    res.set("Content-Type", media.contentType);
     res.send(mediaBuffer);
   } catch (err) {
     console.error("Error serving media:", err);
