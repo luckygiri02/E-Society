@@ -230,6 +230,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // GET: Serve event media (images/videos)
+// GET: Serve event media (images/videos)
 router.get("/media/:id/:type/:index", async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -244,12 +245,23 @@ router.get("/media/:id/:type/:index", async (req, res) => {
       return res.status(404).send("Media not found");
     }
 
+    // Handle Binary data
+    let imageData;
+    if (media.data && media.data._bsontype === 'Binary') {
+      // Convert Binary to Buffer
+      imageData = Buffer.from(media.data.buffer, 'base64');
+    } else if (Buffer.isBuffer(media.data)) {
+      // Already a Buffer
+      imageData = media.data;
+    } else {
+      return res.status(500).send("Invalid image data format");
+    }
+
     res.set('Content-Type', media.contentType);
-    res.send(media.data);
+    res.send(imageData);
   } catch (err) {
     console.error("Error serving media:", err);
     res.status(500).send("Server error");
   }
 });
-
 module.exports = router;
